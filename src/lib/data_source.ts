@@ -10,12 +10,13 @@ import type {
 } from "@feathermint/mongo-connect";
 import { connect } from "@feathermint/mongo-connect";
 import { User } from "@sentry/node";
-import { Entity, Price, Token, TokenPool, Transfer } from "../types/core";
+import { Price, Token, TokenPool, Transaction, Transfer } from "../types/core";
 
 export interface RepositoryMap {
   users: Collection<User>;
   tokenpools: Collection<TokenPool>;
   tokens: Collection<Token>;
+  transactions: Collection<Transaction>;
   transfers: Collection<Transfer>;
   prices: Collection<Price>;
 }
@@ -27,19 +28,21 @@ export interface StreamMap {
 export class DataSource {
   static #instance: DataSource;
   #client: MongoClient;
-  #cache: { [K in keyof RepositoryMap]?: Collection<Entity> } = {};
+  #cache: Partial<RepositoryMap> = {};
   #streams: StreamMap;
+  #dbName?: string;
 
-  static async init(url?: string): Promise<DataSource> {
+  static async init(url?: string, dbName?: string): Promise<DataSource> {
     if (this.#instance) return this.#instance;
 
-    this.#instance = new DataSource(await connect(url));
+    this.#instance = new DataSource(await connect(url), dbName);
     return this.#instance;
   }
 
-  private constructor(client: MongoClient) {
+  private constructor(client: MongoClient, dbName?: string) {
     this.#client = client;
     this.#streams = {};
+    this.#dbName = dbName;
   }
 
   getStream(
@@ -58,9 +61,11 @@ export class DataSource {
 
   repository<K extends keyof RepositoryMap>(name: K): RepositoryMap[K] {
     if (!this.#cache[name]) {
-      this.#cache[name] = this.#client.db().collection(name);
+      this.#cache[name] = this.#client
+        .db(this.#dbName)
+        .collection(name) as RepositoryMap[K];
     }
-    return this.#cache[name] as RepositoryMap[K];
+    return this.#cache[name]!;
   }
 
   startSession(options?: ClientSessionOptions): ClientSession {
