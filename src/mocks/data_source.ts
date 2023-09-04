@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import type {
   ClientSession,
   Collection,
@@ -6,18 +7,30 @@ import type {
 import { Dictionary } from "..";
 import type { DataSource, RepositoryMap, StreamMap } from "../lib/data_source";
 
-export interface MockCollection<T = Document> {
-  find?: (...args: unknown[]) => MockCursor<T>;
-  findOne?: (...args: unknown[]) => Promise<T | null>;
-  findOneAndUpdate?: (
+export class MockCollection<T = Document> {
+  find(...args: unknown[]): MockCursor<T> {
+    throw new Error("Method not implemented.");
+  }
+  findOne(...args: unknown[]): Promise<T | null> {
+    throw new Error("Method not implemented.");
+  }
+  findOneAndUpdate(
     ...args: unknown[]
-  ) => ReturnType<Collection["findOneAndUpdate"]>;
-  insertOne?: (...args: unknown[]) => ReturnType<Collection["insertOne"]>;
-  updateOne?: (...args: unknown[]) => ReturnType<Collection["updateOne"]>;
-  deleteOne?: (...args: unknown[]) => ReturnType<Collection["deleteOne"]>;
-  countDocuments?: (
-    ...args: unknown[]
-  ) => ReturnType<Collection["countDocuments"]>;
+  ): ReturnType<Collection["findOneAndUpdate"]> {
+    throw new Error("Method not implemented.");
+  }
+  insertOne(...args: unknown[]): ReturnType<Collection["insertOne"]> {
+    throw new Error("Method not implemented.");
+  }
+  updateOne(...args: unknown[]): ReturnType<Collection["updateOne"]> {
+    throw new Error("Method not implemented.");
+  }
+  deleteOne(...args: unknown[]): ReturnType<Collection["deleteOne"]> {
+    throw new Error("Method not implemented.");
+  }
+  countDocuments(...args: unknown[]): ReturnType<Collection["countDocuments"]> {
+    throw new Error("Method not implemented.");
+  }
 }
 
 export class MockDataSource implements Required<DataSource> {
