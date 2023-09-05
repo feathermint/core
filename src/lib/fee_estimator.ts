@@ -3,7 +3,6 @@ import type { ChangeStreamUpdateDocument } from "@feathermint/mongo-connect";
 import { GasPrice, MaticPrice, Price } from "../types/core";
 import type { DataSource } from "./data_source";
 import type { EventReporter } from "./event_reporter";
-import { ONE_GWEI } from "./utils/constants";
 
 type Operation = keyof typeof FeathermintERC1155;
 
@@ -11,7 +10,6 @@ interface FeeEstimatorDeps {
   dataSource: Required<DataSource>;
   eventReporter: EventReporter;
   platformFee: number;
-  gasFeeMargin: number;
 }
 
 interface FeeEstimatorDepsWithPrices extends FeeEstimatorDeps {
@@ -23,7 +21,6 @@ export class FeeEstimator {
   readonly #dataSource: Required<DataSource>;
   readonly #eventReporter: EventReporter;
   readonly platformFeeUSD: number;
-  readonly gasFeeMargin: number;
   #gasPrice: bigint;
   #maticPrice: number;
 
@@ -35,9 +32,6 @@ export class FeeEstimator {
     ]);
     if (!gasPriceDoc) throw new PriceNotFoundError("gas");
     if (!maticPriceDoc) throw new PriceNotFoundError("matic");
-
-    if (deps.gasFeeMargin < 0 || deps.gasFeeMargin > 1)
-      throw new InvalidGasFeeMarginError();
 
     return new FeeEstimator({
       ...deps,
@@ -52,7 +46,6 @@ export class FeeEstimator {
     this.platformFeeUSD = deps.platformFee;
     this.#maticPrice = deps.maticPrice;
     this.#gasPrice = deps.gasPrice;
-    this.gasFeeMargin = deps.gasFeeMargin;
     this.#dataSource
       .getStream("priceUpdates")
       .on("change", this.#changeListener.bind(this));
@@ -86,15 +79,6 @@ export class FeeEstimator {
         // keeping the switch statement exhaustive.
         throw new UnknownOperationError(operation);
     }
-  }
-
-  /**
-   * Returns the amount in gwei that must be deducted from the user's
-   * available balance and added to the user's reserved balance.
-   */
-  reservedAmount(gasUnits: number): number {
-    const gasFee = gasUnits * Number(this.gasPrice / ONE_GWEI);
-    return gasFee + gasFee * this.gasFeeMargin + this.platformFee();
   }
 
   /**
@@ -140,11 +124,5 @@ export class UnknownOperationError extends Error {
 export class UndefinedDocumentError extends Error {
   constructor() {
     super("fee_estimator: change.fullDocument is undefined");
-  }
-}
-
-export class InvalidGasFeeMarginError extends Error {
-  constructor() {
-    super("fee_estimator: gasFeeMargin must be between 0 and 1");
   }
 }
