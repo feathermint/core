@@ -9,20 +9,20 @@ import type {
   TransactionOptions,
 } from "@feathermint/mongo-connect";
 import { connect } from "@feathermint/mongo-connect";
-import { User } from "@sentry/node";
-import { Price, Token, TokenPool, Transaction, Transfer } from "../types/core";
+import * as fm from "../types/core";
 
 export interface RepositoryMap {
-  users: Collection<User>;
-  tokenpools: Collection<TokenPool>;
-  tokens: Collection<Token>;
-  transactions: Collection<Transaction>;
-  transfers: Collection<Transfer>;
-  prices: Collection<Price>;
+  users: Collection<fm.User>;
+  tokenpools: Collection<fm.TokenPool>;
+  tokens: Collection<fm.Token>;
+  transactions: Collection<fm.Transaction>;
+  transfers: Collection<fm.Transfer>;
+  prices: Collection<fm.Price>;
+  workers: Collection<fm.Worker>;
 }
 
 export interface StreamMap {
-  priceUpdates?: ChangeStream<Price, ChangeStreamUpdateDocument<Price>>;
+  priceUpdates?: ChangeStream<fm.Price, ChangeStreamUpdateDocument<fm.Price>>;
 }
 
 export class DataSource {
