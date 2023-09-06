@@ -7,27 +7,47 @@ import type {
 import { Dictionary } from "..";
 import type { DataSource, RepositoryMap, StreamMap } from "../lib/data_source";
 
+interface MockCollectionMethods<T = Document> {
+  find?: MockCollection<T>["find"];
+  findOne?: MockCollection<T>["findOne"];
+  findOneAndUpdate?: MockCollection<T>["findOneAndUpdate"];
+  insertOne?: MockCollection<T>["insertOne"];
+  updateOne?: MockCollection<T>["updateOne"];
+  deleteOne?: MockCollection<T>["deleteOne"];
+  countDocuments?: MockCollection<T>["countDocuments"];
+}
+
 export class MockCollection<T = Document> {
+  constructor(methods: MockCollectionMethods<T>) {
+    Object.assign(this, methods);
+  }
+
   find(...args: unknown[]): MockCursor<T> {
     throw new Error("Method not implemented.");
   }
+
   findOne(...args: unknown[]): Promise<T | null> {
     throw new Error("Method not implemented.");
   }
+
   findOneAndUpdate(
     ...args: unknown[]
   ): ReturnType<Collection["findOneAndUpdate"]> {
     throw new Error("Method not implemented.");
   }
+
   insertOne(...args: unknown[]): ReturnType<Collection["insertOne"]> {
     throw new Error("Method not implemented.");
   }
+
   updateOne(...args: unknown[]): ReturnType<Collection["updateOne"]> {
     throw new Error("Method not implemented.");
   }
+
   deleteOne(...args: unknown[]): ReturnType<Collection["deleteOne"]> {
     throw new Error("Method not implemented.");
   }
+
   countDocuments(...args: unknown[]): ReturnType<Collection["countDocuments"]> {
     throw new Error("Method not implemented.");
   }
@@ -79,6 +99,7 @@ export class MockCursor<T> {
       },
     };
   }
+
   toArray(): Promise<Document[]> {
     throw new Error("Method not implemented.");
   }
