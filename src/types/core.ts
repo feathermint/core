@@ -1,6 +1,10 @@
 type ObjectId = import("mongodb").ObjectId;
-export type Entity = TokenPool | Token | Event;
-export type Resource = "token" | "token pool" | "user";
+export type Resource =
+  | "token"
+  | "token pool"
+  | "transaction"
+  | "transfer"
+  | "user";
 
 export interface User {
   account: string;
@@ -63,7 +67,7 @@ export interface TokenPool {
 export interface Transfer {
   userId: ObjectId;
   poolId: ObjectId;
-  txHash: string | null;
+  txHash: string;
   recipient: string;
   token: {
     ids: string[];
@@ -74,12 +78,16 @@ export interface Transfer {
 export type Transaction = TokenCreationTransactionV1 | TransferTransactionV1;
 
 interface BaseTransaction {
+  userId: ObjectId;
   status: -1 | 0 | 1 | 2;
   signer?: string;
   nonce?: number;
-  txHash: string | null;
+  txHash?: string;
   gasUnits: number;
-  reservedAmount: number;
+  reserved: {
+    gasFee: number;
+    platformFee: number;
+  };
 }
 
 export interface TokenCreationTransactionV1 extends BaseTransaction {
@@ -87,7 +95,6 @@ export interface TokenCreationTransactionV1 extends BaseTransaction {
   v: 1;
   token: {
     id: ObjectId;
-    userId: ObjectId;
     poolId: ObjectId;
     name: string;
     description: string;
@@ -98,13 +105,14 @@ export interface TokenCreationTransactionV1 extends BaseTransaction {
 export interface TransferTransactionV1 extends BaseTransaction {
   type: "TransferTransaction";
   v: 1;
-  recipient: string;
-  token: {
-    ids: {
+  transfer: {
+    id: ObjectId;
+    tokenIds: {
       primary: string[];
       secondary: string[];
     };
     amounts: number[];
+    recipient: string;
   };
 }
 
@@ -122,4 +130,9 @@ export interface MaticPrice {
   unit: "usd";
   price: number;
   lastUpdated: Date;
+}
+
+export interface Worker {
+  account: string;
+  transactionIds: string[];
 }
