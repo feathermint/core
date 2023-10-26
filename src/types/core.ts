@@ -4,7 +4,8 @@ export type Resource =
   | "token pool"
   | "transaction"
   | "transfer"
-  | "user";
+  | "user"
+  | "status";
 
 export interface User {
   account: string;
@@ -75,23 +76,19 @@ export interface Transfer {
   };
 }
 
-export type Transaction = TokenCreationTransactionV1 | TransferTransactionV1;
+export type TransactionJob = TokenCreationJobV1 | TransferJobV1;
 
-interface BaseTransaction {
+interface BaseTransactionJob {
   userId: ObjectId;
-  status: -1 | 0 | 1 | 2;
-  signer?: string;
-  nonce?: number;
-  txHash?: string;
   gasUnits: number;
   reserved: {
-    gasFee: number;
-    platformFee: number;
+    gasFee: string;
+    platformFee: string;
   };
 }
 
-export interface TokenCreationTransactionV1 extends BaseTransaction {
-  type: "TokenCreationTransaction";
+export interface TokenCreationJobV1 extends BaseTransactionJob {
+  type: "TokenCreationJob";
   v: 1;
   token: {
     id: ObjectId;
@@ -102,26 +99,30 @@ export interface TokenCreationTransactionV1 extends BaseTransaction {
   };
 }
 
-export interface TransferTransactionV1 extends BaseTransaction {
-  type: "TransferTransaction";
+export interface TransferJobV1 extends BaseTransactionJob {
+  type: "TransferJob";
   v: 1;
   transfer: {
     id: ObjectId;
-    tokenIds: {
-      primary: string[];
-      secondary: string[];
-    };
+    tokenIds: string[];
     amounts: number[];
     recipient: string;
   };
 }
+
+export type InProgress<T extends TransactionJob> = T & {
+  signerAddress: string;
+  nonce: number;
+  txHash: string;
+};
 
 export type Price = GasPrice | MaticPrice;
 
 export interface GasPrice {
   name: "gas";
   unit: "wei";
-  price: string;
+  baseFeePerGas: number;
+  maxPriorityFeePerGas: number;
   lastUpdated: Date;
 }
 
@@ -132,7 +133,10 @@ export interface MaticPrice {
   lastUpdated: Date;
 }
 
-export interface Worker {
-  account: string;
-  transactionIds: string[];
+export enum JobStatus {
+  Unknown = 0,
+  Queued = 1,
+  InProgress = 2,
+  Success = 3,
+  Failure = 4,
 }
