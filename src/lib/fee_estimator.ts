@@ -1,6 +1,6 @@
 import { FeathermintERC1155 } from "@feathermint/contracts/utils/gas.json";
 import type { ChangeStreamUpdateDocument } from "@feathermint/mongo-connect";
-import { GasPrice, MaticPrice, Price } from "../types/core";
+import type { GasPrice, MaticPrice, Price } from "../types/domain";
 import type { DataSource } from "./data_source";
 import type { EventReporter } from "./event_reporter";
 
@@ -13,15 +13,17 @@ interface FeeEstimatorDeps {
 }
 
 interface FeeEstimatorDepsWithPrices extends FeeEstimatorDeps {
-  gasPrice: bigint;
+  baseFeePerGas: bigint;
+  maxPriorityFeePerGas: bigint;
   maticPrice: number;
 }
 
 export class FeeEstimator {
   readonly #dataSource: Required<DataSource>;
   readonly #eventReporter: EventReporter;
-  readonly platformFeeUSD: number;
-  #gasPrice: bigint;
+  readonly #platformFeeUSD: number;
+  #baseFeePerGas: bigint;
+  #maxPriorityFeePerGas: bigint;
   #maticPrice: number;
 
   static async init(deps: FeeEstimatorDeps) {
@@ -35,7 +37,8 @@ export class FeeEstimator {
 
     return new FeeEstimator({
       ...deps,
-      gasPrice: BigInt(gasPriceDoc.price),
+      baseFeePerGas: BigInt(gasPriceDoc.baseFeePerGas),
+      maxPriorityFeePerGas: BigInt(gasPriceDoc.maxPriorityFeePerGas),
       maticPrice: maticPriceDoc.price,
     });
   }
@@ -43,20 +46,21 @@ export class FeeEstimator {
   private constructor(deps: FeeEstimatorDepsWithPrices) {
     this.#dataSource = deps.dataSource;
     this.#eventReporter = deps.eventReporter;
-    this.platformFeeUSD = deps.platformFee;
+    this.#platformFeeUSD = deps.platformFee;
+    this.#baseFeePerGas = deps.baseFeePerGas;
+    this.#maxPriorityFeePerGas = deps.maxPriorityFeePerGas;
     this.#maticPrice = deps.maticPrice;
-    this.#gasPrice = deps.gasPrice;
     this.#dataSource
       .getStream("priceUpdates")
       .on("change", this.#changeListener.bind(this));
   }
 
-  get gasPrice(): bigint {
-    return this.#gasPrice;
+  get baseFeePerGas(): bigint {
+    return this.#baseFeePerGas;
   }
 
-  get maticPrice(): number {
-    return this.#maticPrice;
+  get maxPriorityFeePerGas(): bigint {
+    return this.#maxPriorityFeePerGas;
   }
 
   gasUnits(operation: Operation, batchSize?: number): number {
@@ -66,7 +70,7 @@ export class FeeEstimator {
       case "mint":
       case "burn":
         return FeathermintERC1155[operation];
-      case "safeBatchTransferFrom":
+      case "safeAdjustedBatchTransferFrom":
       case "mintBatch":
       case "burnBatch": {
         const n = !batchSize || batchSize < 2 ? 0 : batchSize - 2;
@@ -81,19 +85,9 @@ export class FeeEstimator {
     }
   }
 
-  /**
-   * Returns the gas fee in wei
-   */
-  gasFee(gasUnits: number): bigint {
-    return BigInt(gasUnits) * this.gasPrice;
-  }
-
-  /**
-   * Returns the platform fee in gwei
-   */
-  platformFee(): number {
-    const fraction = this.platformFeeUSD / this.maticPrice;
-    return Math.floor(fraction * 10 ** 9);
+  platformFee(): bigint {
+    const fraction = this.#platformFeeUSD / this.#maticPrice;
+    return BigInt(Math.floor(fraction * 10 ** 9)) * 10n ** 9n;
   }
 
   #changeListener(change: ChangeStreamUpdateDocument<Price>) {
@@ -102,9 +96,11 @@ export class FeeEstimator {
       return;
     }
 
-    if (change.fullDocument.name === "gas")
-      this.#gasPrice = BigInt(change.fullDocument.price);
-    else if (change.fullDocument.name === "matic")
+    if (change.fullDocument.name === "gas") {
+      const { baseFeePerGas, maxPriorityFeePerGas } = change.fullDocument;
+      this.#baseFeePerGas = BigInt(baseFeePerGas);
+      this.#maxPriorityFeePerGas = BigInt(maxPriorityFeePerGas);
+    } else if (change.fullDocument.name === "matic")
       this.#maticPrice = change.fullDocument.price;
   }
 }

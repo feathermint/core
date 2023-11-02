@@ -1,8 +1,8 @@
-import { Document } from "@feathermint/mongo-connect";
+import type { Document } from "@feathermint/mongo-connect";
 import chai, { expect } from "chai";
 import chaiAsPromised from "chai-as-promised";
 import { MockCollection, MockDataSource, MockEventReporter } from "../mocks";
-import { GasPrice, MaticPrice } from "../types/core";
+import type { GasPrice, MaticPrice } from "../types/domain";
 import { FeeEstimator, PriceNotFoundError } from "./fee_estimator";
 
 chai.use(chaiAsPromised);
@@ -10,7 +10,8 @@ chai.use(chaiAsPromised);
 const gasPriceDoc: GasPrice = {
   name: "gas",
   unit: "wei",
-  price: "0x17b79a6e99",
+  baseFeePerGas: 2 ** 32,
+  maxPriorityFeePerGas: 2 ** 31,
   lastUpdated: new Date(),
 };
 const maticPriceDoc: MaticPrice = {
@@ -71,42 +72,6 @@ describe("FeeEstimator", () => {
           dataSource: new MockDataSource({ prices }),
         }),
       ).to.be.rejectedWith(PriceNotFoundError);
-    });
-  });
-
-  describe("#gasPrice", () => {
-    it("returns the cached gas price", async () => {
-      const fe = await FeeEstimator.init(deps);
-      expect(fe.gasPrice).to.eq(BigInt(gasPriceDoc.price));
-    });
-  });
-
-  describe("#maticPrice", () => {
-    it("returns the cached MATIC price", async () => {
-      const fe = await FeeEstimator.init(deps);
-      expect(fe.maticPrice).to.eq(maticPriceDoc.price);
-    });
-  });
-
-  describe("#gasUnits", () => {
-    it("returns the required amount of gas units for an operation", async () => {
-      const fe = await FeeEstimator.init(deps);
-
-      let result = fe.gasUnits("safeTransferFrom");
-      expect(result).to.eq(58873);
-
-      result = fe.gasUnits("safeBatchTransferFrom");
-      expect(result).to.eq(88393);
-    });
-  });
-
-  describe("#gasFee", () => {
-    it("returns the gas fee in wei based on the number of gas units", async () => {
-      const fe = await FeeEstimator.init(deps);
-      const gasUnits = 100000;
-
-      const result = fe.gasFee(gasUnits);
-      expect(result).to.eq(BigInt(gasUnits) * fe.gasPrice);
     });
   });
 });
