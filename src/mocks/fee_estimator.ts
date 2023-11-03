@@ -1,26 +1,27 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import type { FeeEstimator } from "..";
 
 export class MockFeeEstimator implements Required<FeeEstimator> {
   constructor(
-    public gasPrice: bigint,
-    public maticPrice: number,
+    public baseFeePerGas: bigint,
+    public maxPriorityFeePerGas: bigint,
   ) {}
-  platformFeeUSD = 0;
-  gasFeeMargin = 0;
 
-  gasUnits(): number {
+  gasUnits(
+    operation?:
+      | "createToken"
+      | "safeTransferFrom"
+      | "safeAdjustedBatchTransferFrom"
+      | "mint"
+      | "mintBatch"
+      | "burn"
+      | "burnBatch",
+    batchSize?: number | undefined,
+  ): number {
     throw new Error("Method not implemented.");
   }
 
-  reservedAmount(): number {
-    throw new Error("Method not implemented.");
-  }
-
-  gasFee(): bigint {
-    throw new Error("Method not implemented.");
-  }
-
-  platformFee(): number {
+  platformFee(): bigint {
     throw new Error("Method not implemented.");
   }
 }
