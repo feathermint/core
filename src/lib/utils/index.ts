@@ -1,3 +1,5 @@
+import type { NonEmptyArray } from "../..";
+
 export * from "./constants";
 
 export const isUndefined = (value: unknown) => typeof value === "undefined";
@@ -42,4 +44,8 @@ export function isErrorWithStatusCode(
     return true;
   }
   return false;
+}
+
+export function isNonEmptyArray<T>(obj: T[]): obj is NonEmptyArray<T> {
+  return obj.length > 0;
 }
