@@ -1,4 +1,7 @@
+import type { NonEmptyArray } from "./utils";
+
 type ObjectId = import("mongodb").ObjectId;
+
 export type Resource =
   | "token"
   | "token pool"
@@ -79,8 +82,10 @@ export interface Transfer {
 export type TransactionJob = TokenCreationJobV1 | TransferJobV1;
 
 interface BaseTransactionJob {
-  userId: ObjectId;
-  gasUnits: number;
+  id: string;
+  userId: string;
+  gasLimit: number;
+  mined: boolean;
   reserved: {
     gasFee: string;
     platformFee: string;
@@ -91,8 +96,8 @@ export interface TokenCreationJobV1 extends BaseTransactionJob {
   type: "TokenCreationJob";
   v: 1;
   token: {
-    id: ObjectId;
-    poolId: ObjectId;
+    id: string;
+    poolId: string;
     name: string;
     description: string;
     supply: number;
@@ -103,14 +108,15 @@ export interface TransferJobV1 extends BaseTransactionJob {
   type: "TransferJob";
   v: 1;
   transfer: {
-    id: ObjectId;
-    tokenIds: string[];
-    amounts: number[];
+    id: string;
+    poolId: string;
+    tokenIds: NonEmptyArray<string>;
+    amounts: NonEmptyArray<number>;
     recipient: string;
   };
 }
 
-export type InProgress<T extends TransactionJob> = T & {
+export type Signed<T extends TransactionJob> = T & {
   signerAddress: string;
   nonce: number;
   txHash: string;
