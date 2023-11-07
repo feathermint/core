@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@feathermint/contracts": "^0.3.0",
+    "@feathermint/logger": "^1.0.0",
     "@feathermint/mongo-connect": "^1.0.2",
     "@feathermint/redis-connect": "^2.0.0",
     "@sentry/node": "^7.75.0"
