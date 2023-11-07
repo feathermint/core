@@ -49,3 +49,9 @@ export function isErrorWithStatusCode(
 export function isNonEmptyArray<T>(obj: T[]): obj is NonEmptyArray<T> {
   return obj.length > 0;
 }
+
+export async function sleep(delay: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, delay);
+  });
+}
