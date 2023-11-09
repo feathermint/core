@@ -2,13 +2,7 @@ import type { NonEmptyArray } from "./utils";
 
 type ObjectId = import("mongodb").ObjectId;
 
-export type Resource =
-  | "token"
-  | "token pool"
-  | "transaction"
-  | "transfer"
-  | "user"
-  | "status";
+export type Resource = "token" | "token pool" | "transfer" | "user" | "status";
 
 export interface User {
   account: string;
@@ -85,7 +79,6 @@ interface BaseTransactionJob {
   id: string;
   userId: string;
   gasLimit: number;
-  mined: boolean;
   reserved: {
     gasFee: string;
     platformFee: string;
@@ -116,10 +109,12 @@ export interface TransferJobV1 extends BaseTransactionJob {
   };
 }
 
-export type Signed<T extends TransactionJob> = T & {
+export type InProgress<T extends TransactionJob> = T & {
   signerAddress: string;
   nonce: number;
+  maxPriorityFeePerGas: number;
   txHash: string;
+  mined: boolean;
 };
 
 export type Price = GasPrice | MaticPrice;
