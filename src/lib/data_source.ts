@@ -1,32 +1,26 @@
-import type {
-  ChangeStream,
-  ChangeStreamUpdateDocument,
-  ClientSession,
-  ClientSessionOptions,
-  Collection,
-  Document,
-  MongoClient,
-  TransactionOptions,
-} from "@feathermint/mongo-connect";
+import * as logger from "@feathermint/logger";
+import type * as mongo from "@feathermint/mongo-connect";
 import { connect } from "@feathermint/mongo-connect";
 import * as t from "../types/domain";
 
+const log = logger.create("datasource");
+
 export interface RepositoryMap {
-  users: Collection<t.User>;
-  tokenpools: Collection<t.TokenPool>;
-  tokens: Collection<t.Token>;
-  transfers: Collection<t.Transfer>;
-  txjobs: Collection<t.Signed<t.TransactionJob>>;
-  prices: Collection<t.Price>;
+  users: mongo.Collection<t.User>;
+  tokenpools: mongo.Collection<t.TokenPool>;
+  tokens: mongo.Collection<t.Token>;
+  transfers: mongo.Collection<t.Transfer>;
+  txjobs: mongo.Collection<t.InProgress<t.TransactionJob>>;
+  prices: mongo.Collection<t.Price>;
 }
 
 export interface StreamMap {
-  priceUpdates?: ChangeStream<t.Price, ChangeStreamUpdateDocument<t.Price>>;
+  priceUpdates?: mongo.ChangeStream<t.Price>;
 }
 
 export class DataSource {
   static #instance: DataSource;
-  #client: MongoClient;
+  #client: mongo.MongoClient;
   #cache: Partial<RepositoryMap> = {};
   #streams: StreamMap;
   #dbName?: string;
@@ -38,7 +32,7 @@ export class DataSource {
     return this.#instance;
   }
 
-  private constructor(client: MongoClient, dbName?: string) {
+  private constructor(client: mongo.MongoClient, dbName?: string) {
     this.#client = client;
     this.#streams = {};
     this.#dbName = dbName;
@@ -67,8 +61,8 @@ export class DataSource {
     return this.#cache[name]!;
   }
 
-  startSession(options?: ClientSessionOptions): ClientSession {
-    const defaultTransactionOptions: TransactionOptions = {
+  startSession(options?: mongo.ClientSessionOptions): mongo.ClientSession {
+    const defaultTransactionOptions: mongo.TransactionOptions = {
       readPreference: "primary",
       readConcern: { level: "majority" },
       writeConcern: { w: "majority" },
@@ -80,8 +74,19 @@ export class DataSource {
     });
   }
 
-  close(force?: boolean) {
-    return this.#client.close(force);
+  async close(force: boolean) {
+    const activeStreams = Object.keys(this.#streams);
+    if (activeStreams.length > 0) {
+      await Promise.all(
+        activeStreams.map((name) => {
+          log.info(`Closing ${name} change stream.`);
+          return this.#streams[name as keyof StreamMap]?.close();
+        }),
+      ).catch(log.error);
+    }
+
+    log.info("Closing the MongoDB client.");
+    return await this.#client.close(force);
   }
 
   #priceUpdateStream(options?: {
