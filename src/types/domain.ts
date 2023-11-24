@@ -1,5 +1,3 @@
-import type { NonEmptyArray } from "./utils";
-
 type ObjectId = import("mongodb").ObjectId;
 
 export type Resource = "token" | "token pool" | "transfer" | "user" | "status";
@@ -103,8 +101,8 @@ export interface TransferJobV1 extends BaseTransactionJob {
   transfer: {
     id: string;
     poolId: string;
-    tokenIds: NonEmptyArray<string>;
-    amounts: NonEmptyArray<number>;
+    tokenIds: string[];
+    amounts: number[];
     recipient: string;
   };
 }
