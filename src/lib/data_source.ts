@@ -74,7 +74,7 @@ export class DataSource {
     });
   }
 
-  async close(force: boolean) {
+  async close(force = false) {
     const activeStreams = Object.keys(this.#streams);
     if (activeStreams.length > 0) {
       await Promise.all(
