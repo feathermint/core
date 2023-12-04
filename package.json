@@ -10,7 +10,7 @@
     "dist/"
   ],
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   },
   "keywords": [
     "Feathermint"
@@ -23,34 +23,34 @@
     "test": "npx mocha 'src/**/*.test.ts'"
   },
   "dependencies": {
-    "@feathermint/contracts": "^0.3.0",
+    "@feathermint/contracts": "^0.4.0",
     "@feathermint/logger": "^1.0.0",
     "@feathermint/mongo-connect": "^1.0.2",
     "@feathermint/redis-connect": "^2.0.0",
-    "@sentry/node": "^7.75.0"
+    "@sentry/node": "^7.84.0"
   },
   "devDependencies": {
-    "@commitlint/cli": "^18.0.0",
-    "@commitlint/config-conventional": "^18.0.0",
+    "@commitlint/cli": "^18.4.3",
+    "@commitlint/config-conventional": "^18.4.3",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
-    "@types/chai": "^4.3.9",
-    "@types/chai-as-promised": "^7.1.7",
-    "@types/mocha": "^10.0.3",
-    "@types/node": "^20.8.8",
-    "@typescript-eslint/eslint-plugin": "^6.9.0",
-    "@typescript-eslint/parser": "^6.9.0",
+    "@types/chai": "^4.3.11",
+    "@types/chai-as-promised": "^7.1.8",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^20.10.3",
+    "@typescript-eslint/eslint-plugin": "^6.13.1",
+    "@typescript-eslint/parser": "^6.13.1",
     "chai": "^4.3.10",
     "chai-as-promised": "^7.1.1",
-    "eslint": "^8.52.0",
-    "eslint-config-prettier": "^9.0.0",
+    "eslint": "^8.55.0",
+    "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-node": "^11.1.0",
     "husky": "^8.0.3",
     "mocha": "^10.2.0",
-    "prettier": "^3.0.1",
-    "semantic-release": "^22.0.5",
+    "prettier": "^3.1.0",
+    "semantic-release": "^22.0.8",
     "ts-node": "^10.9.1",
-    "typescript": "^5.1.6"
+    "typescript": "^5.3.2"
   },
   "repository": {
     "type": "git",
