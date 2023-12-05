@@ -25,7 +25,7 @@ export class StatusService {
 
   async get(id: string): Promise<JobStatus> {
     const status = await this.#redis.get(id);
-    switch (Number(status)) {
+    switch (Number(status) as JobStatus) {
       case JobStatus.Queued:
         return JobStatus.Queued;
       case JobStatus.InProgress:
