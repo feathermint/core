@@ -27,7 +27,8 @@
     "@feathermint/logger": "^1.0.0",
     "@feathermint/mongo-connect": "^1.0.2",
     "@feathermint/redis-connect": "^2.0.0",
-    "@sentry/node": "^7.84.0"
+    "@sentry/node": "^7.84.0",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@commitlint/cli": "^18.4.3",
