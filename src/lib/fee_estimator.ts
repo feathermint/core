@@ -1,58 +1,89 @@
-import { FeathermintERC1155 } from "@feathermint/contracts/utils/gas.json";
-import type { ChangeStreamUpdateDocument } from "@feathermint/mongo-connect";
-import type { GasPrice, MaticPrice, Price } from "../types/domain";
-import type { DataSource } from "./data_source";
+import estimates from "@feathermint/contracts/gas/FeathermintERC1155.json";
+import type { Redis } from "@feathermint/redis-connect";
+import { z } from "zod";
+import type { GasPrice, MaticPrice } from "../types/domain";
 import type { EventReporter } from "./event_reporter";
+import { REDIS } from "./utils";
 
-type Operation = keyof typeof FeathermintERC1155;
+const gasSchema = z.object({
+  baseFeePerGas: z.number(),
+  maxPriorityFeePerGas: z.number(),
+  timestamp: z.number(),
+});
+const maticSchema = z.object({
+  price: z.number(),
+  timestamp: z.number(),
+});
+
+type Operation = keyof typeof estimates;
 
 interface FeeEstimatorDeps {
-  dataSource: Required<DataSource>;
+  redis: Redis;
   eventReporter: EventReporter;
   platformFee: number;
 }
 
-interface FeeEstimatorDepsWithPrices extends FeeEstimatorDeps {
-  baseFeePerGas: bigint;
-  maxPriorityFeePerGas: bigint;
-  maticPrice: number;
+interface FeeEstimatorOptions {
+  updateMaticPrice?: boolean;
+  updateGasPrice?: boolean;
 }
 
 export class FeeEstimator {
-  readonly #dataSource: Required<DataSource>;
+  readonly #redis: Redis;
   readonly #eventReporter: EventReporter;
   readonly #platformFeeUSD: number;
-  #baseFeePerGas: bigint;
-  #maxPriorityFeePerGas: bigint;
-  #maticPrice: number;
+  #baseFeePerGas!: bigint;
+  #maxPriorityFeePerGas!: bigint;
+  #maticPrice!: number;
 
-  static async init(deps: FeeEstimatorDeps) {
-    const prices = deps.dataSource.repository("prices");
-    const [gasPriceDoc, maticPriceDoc] = await Promise.all([
-      prices.findOne<GasPrice>({ name: "gas" }),
-      prices.findOne<MaticPrice>({ name: "matic" }),
-    ]);
-    if (!gasPriceDoc) throw new PriceNotFoundError("gas");
-    if (!maticPriceDoc) throw new PriceNotFoundError("matic");
-
-    return new FeeEstimator({
-      ...deps,
-      baseFeePerGas: BigInt(gasPriceDoc.baseFeePerGas),
-      maxPriorityFeePerGas: BigInt(gasPriceDoc.maxPriorityFeePerGas),
-      maticPrice: maticPriceDoc.price,
-    });
+  static async init(deps: FeeEstimatorDeps): Promise<FeeEstimator> {
+    return await new FeeEstimator(deps).init();
   }
 
-  private constructor(deps: FeeEstimatorDepsWithPrices) {
-    this.#dataSource = deps.dataSource;
+  private constructor(deps: FeeEstimatorDeps) {
+    this.#redis = deps.redis;
     this.#eventReporter = deps.eventReporter;
     this.#platformFeeUSD = deps.platformFee;
-    this.#baseFeePerGas = deps.baseFeePerGas;
-    this.#maxPriorityFeePerGas = deps.maxPriorityFeePerGas;
-    this.#maticPrice = deps.maticPrice;
-    this.#dataSource
-      .getStream("priceUpdates")
-      .on("change", this.#changeListener.bind(this));
+  }
+
+  private async init(
+    options: FeeEstimatorOptions = {
+      updateMaticPrice: true,
+      updateGasPrice: true,
+    },
+  ): Promise<this> {
+    const { maticPrice, gasPrice } = REDIS.KEYS;
+    const result = await this.#redis.mget(maticPrice, gasPrice);
+    if (result[0] === null) throw new RedisKeyNotFoundError(maticPrice);
+    if (result[1] === null) throw new RedisKeyNotFoundError(gasPrice);
+
+    let matic: MaticPrice;
+    let gas: GasPrice;
+    try {
+      matic = maticSchema.parse(JSON.parse(result[0]));
+      gas = gasSchema.parse(JSON.parse(result[1]));
+    } catch (err) {
+      throw new InvalidPriceError(err);
+    }
+
+    this.#maticPrice = matic.price;
+    this.#baseFeePerGas = BigInt(gas.baseFeePerGas);
+    this.#maxPriorityFeePerGas = BigInt(gas.maxPriorityFeePerGas);
+
+    const channels: string[] = [];
+    if (options.updateMaticPrice) channels.push(REDIS.CHANNELS.matic);
+    if (options.updateGasPrice) channels.push(REDIS.CHANNELS.gas);
+    if (channels.length) await this.#redis.subscribe(...channels);
+
+    this.#redis.on("message", (channel: string, message: string) => {
+      if (channel === REDIS.CHANNELS.gas) {
+        this.#updateGasPrice(message);
+      } else if (channel === REDIS.CHANNELS.matic) {
+        this.#updateMaticPrice(message);
+      }
+    });
+
+    return this;
   }
 
   get baseFeePerGas(): bigint {
@@ -69,13 +100,13 @@ export class FeeEstimator {
       case "createToken":
       case "mint":
       case "burn":
-        return FeathermintERC1155[operation];
+        return estimates[operation];
       case "safeAdjustedBatchTransferFrom":
       case "mintBatch":
       case "burnBatch": {
         const n = !batchSize || batchSize < 2 ? 0 : batchSize - 2;
-        const minAmount = FeathermintERC1155[operation].min;
-        const additionalAmount = FeathermintERC1155[operation].inc * n;
+        const minAmount = estimates[operation].min;
+        const additionalAmount = estimates[operation].inc * n;
         return minAmount + additionalAmount;
       }
       default:
@@ -90,24 +121,36 @@ export class FeeEstimator {
     return BigInt(Math.floor(fraction * 10 ** 9)) * 10n ** 9n;
   }
 
-  #changeListener(change: ChangeStreamUpdateDocument<Price>) {
-    if (!change.fullDocument) {
-      this.#eventReporter.captureException(new UndefinedDocumentError());
-      return;
-    }
-
-    if (change.fullDocument.name === "gas") {
-      const { baseFeePerGas, maxPriorityFeePerGas } = change.fullDocument;
-      this.#baseFeePerGas = BigInt(baseFeePerGas);
-      this.#maxPriorityFeePerGas = BigInt(maxPriorityFeePerGas);
-    } else if (change.fullDocument.name === "matic")
-      this.#maticPrice = change.fullDocument.price;
+  async close() {
+    await this.#redis.unsubscribe();
+    await this.#redis.quit();
   }
+
+  #updateMaticPrice = (message: string) => {
+    try {
+      const matic = maticSchema.parse(JSON.parse(message));
+      this.#maticPrice = matic.price;
+    } catch (err) {
+      const wrappedError = new PriceUpdateError("matic", err);
+      this.#eventReporter.captureException(wrappedError);
+    }
+  };
+
+  #updateGasPrice = (message: string) => {
+    try {
+      const gas = gasSchema.parse(JSON.parse(message));
+      this.#baseFeePerGas = BigInt(gas.baseFeePerGas);
+      this.#maxPriorityFeePerGas = BigInt(gas.maxPriorityFeePerGas);
+    } catch (err) {
+      const wrappedError = new PriceUpdateError("gas", err);
+      this.#eventReporter.captureException(wrappedError);
+    }
+  };
 }
 
-export class PriceNotFoundError extends Error {
-  constructor(name: "gas" | "matic") {
-    super(`fee_estimator: ${name} price not found`);
+export class RedisKeyNotFoundError extends Error {
+  constructor(key: string) {
+    super(`fee_estimator: ${key} not found`);
   }
 }
 
@@ -117,8 +160,14 @@ export class UnknownOperationError extends Error {
   }
 }
 
-export class UndefinedDocumentError extends Error {
-  constructor() {
-    super("fee_estimator: change.fullDocument is undefined");
+export class InvalidPriceError extends Error {
+  constructor(cause: unknown) {
+    super("fee_estimator: invalid price", { cause });
+  }
+}
+
+export class PriceUpdateError extends Error {
+  constructor(name: "matic" | "gas", cause: unknown) {
+    super(`fee_estimator: failed to update ${name} price`, { cause });
   }
 }
