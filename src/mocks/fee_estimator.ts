@@ -24,4 +24,8 @@ export class MockFeeEstimator implements Required<FeeEstimator> {
   platformFee(): bigint {
     throw new Error("Method not implemented.");
   }
+
+  close(): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
 }
