@@ -75,13 +75,7 @@ export class FeeEstimator {
     if (options.updateGasPrice) channels.push(REDIS.CHANNELS.gas);
     if (channels.length) await this.#redis.subscribe(...channels);
 
-    this.#redis.on("message", (channel: string, message: string) => {
-      if (channel === REDIS.CHANNELS.gas) {
-        this.#updateGasPrice(message);
-      } else if (channel === REDIS.CHANNELS.matic) {
-        this.#updateMaticPrice(message);
-      }
-    });
+    this.#redis.on("message", this.#handleMessage);
 
     return this;
   }
@@ -122,9 +116,18 @@ export class FeeEstimator {
   }
 
   async close() {
+    this.#redis.removeListener("message", this.#handleMessage);
     await this.#redis.unsubscribe();
     await this.#redis.quit();
   }
+
+  #handleMessage = (channel: string, message: string) => {
+    if (channel === REDIS.CHANNELS.gas) {
+      this.#updateGasPrice(message);
+    } else if (channel === REDIS.CHANNELS.matic) {
+      this.#updateMaticPrice(message);
+    }
+  };
 
   #updateMaticPrice = (message: string) => {
     try {
