@@ -1,6 +1,6 @@
 {
   "name": "@feathermint/core",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "description": "Provides a collection of classes, types and utilities shared by components of the Feathermint platform.",
   "author": "Feathermint",
   "license": "GPL-3.0-or-later",

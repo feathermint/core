@@ -1,3 +1,31 @@
+## [4.0.0](https://github.com/feathermint/core/compare/v3.0.0...v4.0.0) (2023-12-12)
+
+
+### ⚠ BREAKING CHANGES
+
+* add runTransaction, remove getStream
+* domain modifications and additions
+* remove StatusService class
+* multiple breaking changes
+
+### Features
+
+* add Redis-related constants ([8074143](https://github.com/feathermint/core/commit/80741439ead969bcb50e2bd4c7bb8c95990d3cf1))
+* add runTransaction, remove getStream ([205e2ac](https://github.com/feathermint/core/commit/205e2ac17f24640325cceadebf6234de1db3385f))
+* domain modifications and additions ([36aae79](https://github.com/feathermint/core/commit/36aae797cf7868b0cb0c3900b5457fcb36f36a14))
+* remove StatusService class ([25c0be9](https://github.com/feathermint/core/commit/25c0be97b9d209181541aaff69e585df46f1d1fb))
+
+
+### Bug Fixes
+
+* eslint error when accessing job status ([bf8ff4d](https://github.com/feathermint/core/commit/bf8ff4d5409f74cd851cfcc3e93b5ce5f2c9e8fc))
+* update package exports ([249cf17](https://github.com/feathermint/core/commit/249cf1797cf8df772d6aec120de65e7f281fdc31))
+
+
+### Code Refactoring
+
+* multiple breaking changes ([4ff73f5](https://github.com/feathermint/core/commit/4ff73f50ba5c42c5efb3eb78f8b390b883c1b2ed))
+
 ## [3.0.0](https://github.com/feathermint/core/compare/v2.0.0...v3.0.0) (2023-11-09)
 
 
