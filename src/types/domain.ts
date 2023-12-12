@@ -4,10 +4,6 @@ export type Resource = "token" | "token pool" | "transfer" | "user" | "status";
 
 export interface User {
   account: string;
-  balance: {
-    available: number;
-    reserved: number;
-  };
   profile: {
     name: string | null;
     avatar: string | null;
@@ -76,11 +72,10 @@ export type TransactionJob = TokenCreationJobV1 | TransferJobV1;
 interface BaseTransactionJob {
   id: string;
   userId: string;
-  gasLimit: number;
-  reserved: {
-    gasFee: string;
-    platformFee: string;
-  };
+  signerAddress: string | null;
+  nonce: number | null;
+  maxPriorityFeePerGas: number | null;
+  txHash: string | null;
 }
 
 export interface TokenCreationJobV1 extends BaseTransactionJob {
@@ -89,8 +84,6 @@ export interface TokenCreationJobV1 extends BaseTransactionJob {
   token: {
     id: string;
     poolId: string;
-    name: string;
-    description: string;
     supply: number;
   };
 }
@@ -107,29 +100,44 @@ export interface TransferJobV1 extends BaseTransactionJob {
   };
 }
 
-export type InProgress<T extends TransactionJob> = T & {
-  signerAddress: string;
-  nonce: number;
-  maxPriorityFeePerGas: number;
-  txHash: string;
-  mined: boolean;
-};
+export interface TransactionReceipt {
+  transactionHash: string;
+  transactionIndex: string;
+  blockHash: string;
+  blockNumber: string;
+  from: string;
+  to: string | null;
+  cumulativeGasUsed: string;
+  gasUsed: string;
+  contractAddress: string | null;
+  logs: TransactionLog[];
+  logsBloom: string;
+  type: string;
+  status: string;
+  effectiveGasPrice: string;
+}
 
-export type Price = GasPrice | MaticPrice;
+export interface TransactionLog {
+  removed: boolean;
+  logIndex: string;
+  transactionIndex: string;
+  transactionHash: string;
+  blockHash: string;
+  blockNumber: string;
+  address: string;
+  data: string;
+  topics: string[];
+}
 
 export interface GasPrice {
-  name: "gas";
-  unit: "wei";
   baseFeePerGas: number;
   maxPriorityFeePerGas: number;
-  lastUpdated: Date;
+  timestamp: number;
 }
 
 export interface MaticPrice {
-  name: "matic";
-  unit: "usd";
   price: number;
-  lastUpdated: Date;
+  timestamp: number;
 }
 
 export enum JobStatus {
