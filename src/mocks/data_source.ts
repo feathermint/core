@@ -1,11 +1,14 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import type {
   ClientSession,
+  ClientSessionOptions,
   Collection,
   Document,
+  TransactionOptions,
+  WithTransactionCallback,
 } from "@feathermint/mongo-connect";
 import { Dictionary } from "..";
-import type { DataSource, RepositoryMap, StreamMap } from "../lib/data_source";
+import type { DataSource, RepositoryMap } from "../lib/data_source";
 
 interface MockCollectionMethods<T = Document> {
   find?: MockCollection<T>["find"];
@@ -56,22 +59,14 @@ export class MockCollection<T = Document> {
 export class MockDataSource implements Required<DataSource> {
   constructor(private collections: Dictionary<MockCollection>) {}
 
-  getStream(name: keyof StreamMap): Required<StreamMap>[keyof StreamMap] {
-    switch (name) {
-      case "priceUpdates":
-        return {
-          on: noop,
-        } as unknown as Required<StreamMap>["priceUpdates"];
-      default:
-        throw new Error(`Stream ${name as string} does not exist.`);
-    }
+  repository<K extends keyof RepositoryMap>(name: K): RepositoryMap[K] {
+    return this.collections[name] as unknown as RepositoryMap[K];
   }
 
   startSession(): ClientSession {
     return {
       async withTransaction(callback: () => Promise<void>) {
         await callback();
-        return {};
       },
       async endSession() {
         //
@@ -79,8 +74,16 @@ export class MockDataSource implements Required<DataSource> {
     } as ClientSession;
   }
 
-  repository<K extends keyof RepositoryMap>(name: K): RepositoryMap[K] {
-    return this.collections[name] as unknown as RepositoryMap[K];
+  async runTransaction(
+    fn: WithTransactionCallback<void>,
+    options?:
+      | {
+          session?: ClientSessionOptions | undefined;
+          transaction?: TransactionOptions | undefined;
+        }
+      | undefined,
+  ): Promise<void> {
+    await fn({} as ClientSession);
   }
 
   close(): Promise<void> {
