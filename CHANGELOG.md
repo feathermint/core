@@ -1,3 +1,18 @@
+## [5.0.0](https://github.com/feathermint/core/compare/v4.0.0...v5.0.0) (2023-12-23)
+
+
+### ⚠ BREAKING CHANGES
+
+* domain modifications
+* remove FeeEstimator and MockFeeEstimator classes
+* remove matic related constants
+
+### Features
+
+* domain modifications ([d770f7b](https://github.com/feathermint/core/commit/d770f7b96f400be65354364335b0520a8013b321))
+* remove FeeEstimator and MockFeeEstimator classes ([099f62e](https://github.com/feathermint/core/commit/099f62e1baa1b3ec6ed1a6a64342f45b0a827982))
+* remove matic related constants ([070c3a6](https://github.com/feathermint/core/commit/070c3a6e3fa4ecf1218b255abe6779e1a50f4f11))
+
 ## [4.0.0](https://github.com/feathermint/core/compare/v3.0.0...v4.0.0) (2023-12-12)
 
 
