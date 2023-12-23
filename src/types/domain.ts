@@ -62,7 +62,7 @@ export interface Transfer {
   txHash: string;
   recipient: string;
   token: {
-    ids: string[];
+    ids: ObjectId[];
     amounts: number[];
   };
 }
@@ -70,8 +70,7 @@ export interface Transfer {
 export type TransactionJob = TokenCreationJobV1 | TransferJobV1;
 
 interface BaseTransactionJob {
-  id: string;
-  userId: string;
+  userId: ObjectId;
   signerAddress: string | null;
   nonce: number | null;
   maxPriorityFeePerGas: number | null;
@@ -82,8 +81,8 @@ export interface TokenCreationJobV1 extends BaseTransactionJob {
   type: "TokenCreationJob";
   v: 1;
   token: {
-    id: string;
-    poolId: string;
+    id: ObjectId;
+    poolId: ObjectId;
     supply: number;
   };
 }
@@ -92,9 +91,9 @@ export interface TransferJobV1 extends BaseTransactionJob {
   type: "TransferJob";
   v: 1;
   transfer: {
-    id: string;
-    poolId: string;
-    tokenIds: string[];
+    id: ObjectId;
+    poolId: ObjectId;
+    tokenIds: ObjectId[];
     amounts: number[];
     recipient: string;
   };
@@ -132,11 +131,6 @@ export interface TransactionLog {
 export interface GasPrice {
   baseFeePerGas: number;
   maxPriorityFeePerGas: number;
-  timestamp: number;
-}
-
-export interface MaticPrice {
-  price: number;
   timestamp: number;
 }
 
