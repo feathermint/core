@@ -1,3 +1,20 @@
+## [6.0.0](https://github.com/feathermint/core/compare/v5.0.0...v6.0.0) (2023-12-29)
+
+
+### ⚠ BREAKING CHANGES
+
+* domain modifications
+* rename DataSource to DataStore
+
+### Features
+
+* domain modifications ([379eac9](https://github.com/feathermint/core/commit/379eac946bfa516c37b386dc5898e2fe8e276b39))
+
+
+### Code Refactoring
+
+* rename DataSource to DataStore ([bbb41b1](https://github.com/feathermint/core/commit/bbb41b133a549d90d769b58949001fddde95b752))
+
 ## [5.0.0](https://github.com/feathermint/core/compare/v4.0.0...v5.0.0) (2023-12-23)
 
 
