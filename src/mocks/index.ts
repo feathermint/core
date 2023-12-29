@@ -1,2 +1,2 @@
-export { MockCollection, MockCursor, MockDataSource } from "./data_source";
+export { MockCollection, MockCursor, MockDataStore } from "./data_store";
 export { MockEventReporter } from "./event_reporter";

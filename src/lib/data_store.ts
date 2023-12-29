@@ -3,7 +3,7 @@ import type * as mongo from "@feathermint/mongo-connect";
 import { connect } from "@feathermint/mongo-connect";
 import * as t from "../types/domain";
 
-const log = logger.create("datasource");
+const log = logger.create("datastore");
 
 export interface RepositoryMap {
   users: mongo.Collection<t.User>;
@@ -13,8 +13,8 @@ export interface RepositoryMap {
   txjobs: mongo.Collection<t.TransactionJob>;
 }
 
-export class DataSource {
-  static #instance: DataSource;
+export class DataStore {
+  static #instance: DataStore;
   readonly #client: mongo.MongoClient;
   readonly #cache: Partial<RepositoryMap> = {};
   readonly #dbName?: string;
@@ -24,10 +24,10 @@ export class DataSource {
     writeConcern: { w: "majority" },
   };
 
-  static async init(url?: string, dbName?: string): Promise<DataSource> {
+  static async init(url?: string, dbName?: string): Promise<DataStore> {
     if (this.#instance) return this.#instance;
 
-    this.#instance = new DataSource(await connect(url), dbName);
+    this.#instance = new DataStore(await connect(url), dbName);
     return this.#instance;
   }
 

@@ -8,7 +8,7 @@ import type {
   WithTransactionCallback,
 } from "@feathermint/mongo-connect";
 import { Dictionary } from "..";
-import type { DataSource, RepositoryMap } from "../lib/data_source";
+import type { DataStore, RepositoryMap } from "../lib/data_store";
 
 interface MockCollectionMethods<T = Document> {
   find?: MockCollection<T>["find"];
@@ -56,7 +56,7 @@ export class MockCollection<T = Document> {
   }
 }
 
-export class MockDataSource implements Required<DataSource> {
+export class MockDataStore implements Required<DataStore> {
   constructor(private collections: Dictionary<MockCollection>) {}
 
   repository<K extends keyof RepositoryMap>(name: K): RepositoryMap[K] {
