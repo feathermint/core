@@ -23,6 +23,7 @@ export interface Token {
   supply: number;
   transferred: number;
   txHash: string | null;
+  status: TokenStatus;
   // Arbitrary properties. Values may be strings, numbers, object or arrays.
   // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1155.md#erc-1155-metadata-uri-json-schema
   // properties: unknown;
@@ -48,6 +49,7 @@ export interface TokenPool {
   name: string;
   description: string;
   count: number;
+  balances: { [tokenId: string]: number };
   aggregate: {
     balance: number;
     supply: number;
@@ -75,6 +77,7 @@ interface BaseTransactionJob {
   nonce: number | null;
   maxPriorityFeePerGas: number | null;
   txHash: string | null;
+  status: JobStatus;
 }
 
 export interface TokenCreationJobV1 extends BaseTransactionJob {
@@ -140,4 +143,12 @@ export enum JobStatus {
   InProgress = 2,
   Success = 3,
   Failure = 4,
+}
+
+export enum TokenStatus {
+  Default = 0,
+  HasImage = 1,
+  HasTokenMetadata = 1 << 1,
+  HasLiquidityTokenMetadata = 1 << 2,
+  IsMined = 1 << 3,
 }
