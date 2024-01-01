@@ -14,4 +14,6 @@ export class EventReporter {
 
   captureException = Sentry.captureException;
   captureMessage = Sentry.captureMessage;
+  requestHandler = Sentry.Handlers.requestHandler;
+  errorHandler = Sentry.Handlers.errorHandler;
 }
