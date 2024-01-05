@@ -96,8 +96,7 @@ export interface TransferJobV1 extends BaseTransactionJob {
   transfer: {
     id: ObjectId;
     poolId: ObjectId;
-    tokenIds: ObjectId[];
-    amounts: number[];
+    tokens: { [tokenId: string]: number };
     recipient: string;
   };
 }
