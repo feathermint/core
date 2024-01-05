@@ -1,3 +1,15 @@
+## [7.0.0](https://github.com/feathermint/core/compare/v6.0.0...v7.0.0) (2024-01-05)
+
+
+### ⚠ BREAKING CHANGES
+
+* modify TransferJobV1 type
+
+### Features
+
+* **EventReporter:** expose Sentry's built-in Express handlers ([50b1e9c](https://github.com/feathermint/core/commit/50b1e9ccfabc73c2df0f2b9c6b05ec17cdacfba8))
+* modify TransferJobV1 type ([b13e4d7](https://github.com/feathermint/core/commit/b13e4d7fa530b55e7b5339d23917185f2456ea86))
+
 ## [6.0.0](https://github.com/feathermint/core/compare/v5.0.0...v6.0.0) (2023-12-29)
 
 
